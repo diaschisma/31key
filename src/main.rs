@@ -80,13 +80,13 @@ fn proceed() {
             match event {
                 Some(Event::Closed) => return,
                 Some(Event::Resized {width: w, height: h}) => {
-                    window.set_view(&View::new_from_rect(&Rect::new(0.0, 0.0, w as f32, h as f32)).unwrap());
+                    window.set_view(&View::from_rect(&Rect::new(0.0, 0.0, w as f32, h as f32)));
                     hexes.resize(w as f32, h as f32);
                 },
                 Some(Event::MouseButtonPressed {button: Left, x, y}) => {
                     let note = hexes.press(x, y) + 64;
                     if note < 128 && note > 0 {
-                        the_box.note_on(note as u8);
+                        drop(the_box.note_on(note as u8));
                     }
                 },
                 Some(Event::MouseButtonReleased {button: Left, ..}) => {

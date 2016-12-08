@@ -58,7 +58,7 @@ impl Hexes {
 
         let rgb = COLORS[cn];
         if self.pressed.contains(&c) {
-            Color::modulate(Color::new_rgb(rgb.0, rgb.1, rgb.2), Color::new_rgb(0xb0, 0xc0, 0xd0))
+            Color::new_rgb(rgb.0, rgb.1, rgb.2) * Color::new_rgb(0xb0, 0xc0, 0xd0)
         } else {
             Color::new_rgb(rgb.0, rgb.1, rgb.2)
         }
@@ -140,12 +140,12 @@ fn is_outside(hx: &Hexes, xy: Vector2f) -> bool {
 
 
 impl Drawable for Hexes {
-    fn draw<RT: RenderTarget>(&self, target: &mut RT, rs: &mut RenderStates) {
+    fn draw(&self, target: &mut RenderTarget, rs: &mut RenderStates) {
         let center = Vector2f {
             x: self.width / 2.0,
             y: self.height / 2.0
         };
-        let mut cs = CircleShape::new_init(self.radius, 6).unwrap();
+        let mut cs = CircleShape::new_init(self.radius, 6);
         cs.set_origin(&Vector2f {
             x: self.radius,
             y: self.radius,
