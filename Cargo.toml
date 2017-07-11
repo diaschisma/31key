@@ -4,7 +4,13 @@ version = "0.1.0"
 authors = ["Сухарик <suhr@i2pmail.org>"]
 
 [dependencies]
+gfx = "0.16"
+gfx_device_gl = "0.14"
+gfx_window_glutin = "0.16"
+glutin = "0.8"
+cgmath = "0.14"
+palette = "0.2"
 portmidi = "*"
 
-[dependencies.sfml]
-git = "https://github.com/jeremyletang/rust-sfml.git"
+[profile.release]
+lto = true
