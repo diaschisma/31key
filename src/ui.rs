@@ -78,44 +78,168 @@ fn hex_corner(center: Xy, size: f32, angle: Rad<f32>, i: u8) -> Xy {
     center + rot.rotate_vector(Vector2 { x: 0.0, y: size })
 }
 
+#[derive(Debug, Clone, PartialEq)]
+pub struct Layout {
+    pub angle: Rad<f32>,
+    pub q_steps: i32,
+    pub r_steps: i32,
+    pub colors: Vec<Vector3<f32>>,
+}
+
+pub fn edo31_layout() -> Layout {
+    Layout {
+        angle: Deg(16.102113752).into(),
+        q_steps: 5,
+        r_steps: 3,
+        colors: vec![
+            rgb!(0xff, 0xff, 0xff),
+            rgb!(0xff, 0x9f, 0x41),
+            rgb!(0xcf, 0xcf, 0xcf),
+            rgb!(0xbb, 0xaa, 0x93),
+            rgb!(0x7b, 0x7b, 0x7b),
+            rgb!(0xff, 0xff, 0xff),
+            rgb!(0xff, 0x9f, 0x41),
+            rgb!(0xcf, 0xcf, 0xcf),
+            rgb!(0xbb, 0xaa, 0x93),
+            rgb!(0x7b, 0x7b, 0x7b),
+            rgb!(0xff, 0xff, 0xff),
+            rgb!(0xbb, 0xaa, 0x93),
+            rgb!(0xcf, 0xcf, 0xcf),
+            rgb!(0xff, 0xff, 0xff),
+            rgb!(0xff, 0x9f, 0x41),
+            rgb!(0xcf, 0xcf, 0xcf),
+            rgb!(0xbb, 0xaa, 0x93),
+            rgb!(0x7b, 0x7b, 0x7b),
+            rgb!(0xff, 0xff, 0xff),
+            rgb!(0xff, 0x9f, 0x41),
+            rgb!(0xcf, 0xcf, 0xcf),
+            rgb!(0xbb, 0xaa, 0x93),
+            rgb!(0x7b, 0x7b, 0x7b),
+            rgb!(0xff, 0xff, 0xff),
+            rgb!(0xff, 0x9f, 0x41),
+            rgb!(0xcf, 0xcf, 0xcf),
+            rgb!(0xbb, 0xaa, 0x93),
+            rgb!(0x7b, 0x7b, 0x7b),
+            rgb!(0xff, 0xff, 0xff),
+            rgb!(0xbb, 0xaa, 0x93),
+            rgb!(0xcf, 0xcf, 0xcf),
+        ],
+    }
+}
+
+pub fn edo12_layout() -> Layout {
+    Layout {
+        angle: Deg(16.102113752).into(),
+        q_steps: 2,
+        r_steps: 1,
+        colors: vec![
+            rgb!(0xef, 0xef, 0xef),
+            rgb!(0x4b, 0x4b, 0x4b),
+            rgb!(0xef, 0xef, 0xef),
+            rgb!(0x4b, 0x4b, 0x4b),
+            rgb!(0xef, 0xef, 0xef),
+            rgb!(0xef, 0xef, 0xef),
+            rgb!(0x4b, 0x4b, 0x4b),
+            rgb!(0xef, 0xef, 0xef),
+            rgb!(0x4b, 0x4b, 0x4b),
+            rgb!(0xef, 0xef, 0xef),
+            rgb!(0x4b, 0x4b, 0x4b),
+            rgb!(0xef, 0xef, 0xef),
+        ],
+    }
+}
+
+pub fn edo53_layout() -> Layout {
+    Layout {
+        angle: Deg(-16.102113752).into(),
+        q_steps: 9,
+        r_steps: 5,
+        colors: vec![
+            rgb!(0xff, 0xff, 0xff),
+            rgb!(0xc3, 0xb7, 0xab),
+            rgb!(0xe7, 0xe7, 0xe7),
+            rgb!(0x87, 0x87, 0x87),
+            rgb!(0xff, 0x9f, 0x40),
+            rgb!(0x87, 0x87, 0x87),
+            rgb!(0xff, 0x9f, 0x40),
+            rgb!(0xe7, 0xe7, 0xe7),
+            rgb!(0xab, 0xb7, 0xc3),
+            rgb!(0xff, 0xff, 0xff),
+            rgb!(0xc3, 0xb7, 0xab),
+            rgb!(0xe7, 0xe7, 0xe7),
+            rgb!(0x87, 0x87, 0x87),
+            rgb!(0xff, 0x9f, 0x40),
+            rgb!(0x87, 0x87, 0x87),
+            rgb!(0xff, 0x9f, 0x40),
+            rgb!(0xe7, 0xe7, 0xe7),
+            rgb!(0xab, 0xb7, 0xc3),
+            rgb!(0xff, 0xff, 0xff),
+            rgb!(0xc3, 0xb7, 0xab),
+            rgb!(0xe7, 0xe7, 0xe7),
+            rgb!(0xab, 0xb7, 0xc3),
+            rgb!(0xff, 0xff, 0xff),
+            rgb!(0xc3, 0xb7, 0xab),
+            rgb!(0xe7, 0xe7, 0xe7),
+            rgb!(0x87, 0x87, 0x87),
+            rgb!(0xff, 0x9f, 0x40),
+            rgb!(0x87, 0x87, 0x87),
+            rgb!(0xff, 0x9f, 0x40),
+            rgb!(0xe7, 0xe7, 0xe7),
+            rgb!(0xab, 0xb7, 0xc3),
+            rgb!(0xff, 0xff, 0xff),
+            rgb!(0xc3, 0xb7, 0xab),
+            rgb!(0xe7, 0xe7, 0xe7),
+            rgb!(0x87, 0x87, 0x87),
+            rgb!(0xff, 0x9f, 0x40),
+            rgb!(0x87, 0x87, 0x87),
+            rgb!(0xff, 0x9f, 0x40),
+            rgb!(0xe7, 0xe7, 0xe7),
+            rgb!(0xab, 0xb7, 0xc3),
+            rgb!(0xff, 0xff, 0xff),
+            rgb!(0xc3, 0xb7, 0xab),
+            rgb!(0xe7, 0xe7, 0xe7),
+            rgb!(0x87, 0x87, 0x87),
+            rgb!(0xff, 0x9f, 0x40),
+            rgb!(0x87, 0x87, 0x87),
+            rgb!(0xff, 0x9f, 0x40),
+            rgb!(0xe7, 0xe7, 0xe7),
+            rgb!(0xab, 0xb7, 0xc3),
+            rgb!(0xff, 0xff, 0xff),
+            rgb!(0xc3, 0xb7, 0xab),
+            rgb!(0xe7, 0xe7, 0xe7),
+            rgb!(0xab, 0xb7, 0xc3),
+        ],
+    }
+}
+
 #[derive(Debug)]
 pub struct Hexes {
     pub size: Vector2<f32>,
     pub hex_size: f32,
     pub hex_gap: f32,
-    pub angle: Rad<f32>,
+    pub layout: Layout,
     pub pressed: Vec<Qr<i32>>,
 }
 
-fn midi_note(qr: Qr<i32>) -> u8 {
-    (5*qr.x + 3*qr.y + 64) as u8
-}
-
 impl Hexes {
-    pub fn new(size: Vector2<f32>, pressed: Vec<Qr<i32>>) -> Self {
+    pub fn new(size: Vector2<f32>, layout: Layout) -> Self {
         Hexes {
             size,
             hex_size: 80.0,
             hex_gap: 2.0,
-            angle: Deg(16.102113752).into(),
-            pressed,
+            layout,
+            pressed: vec![],
         }
     }
 
     fn hex_color(&self, c: Qr<i32>) -> Color {
-        let n = match 5*c.x + 3*c.y {
+        let len = self.layout.colors.len() as i32;
+        let n = match self.steps(c) % len {
             p if p >= 0 => p,
-            n => 248 + n,
-        } % 31;
-        let cn = match n {
-            0 | 5 | 10 | 13 | 18 | 23 | 28 => 0,
-            2 | 7 | 12 | 15 | 20 | 25 | 30 => 1,
-            29 | 3 | 8 | 11 | 16 | 21 | 26 => 2,
-            4 | 9 | 17 | 22 | 27 => 3,
-            _ => 4,
+            n => len + n,
         };
 
-        let rgb = COLORS[cn];
+        let rgb = self.layout.colors[n as usize];
         if self.pressed.contains(&c) {
             0.5 * rgb
         } else {
@@ -123,13 +247,18 @@ impl Hexes {
         }
     }
 
-    pub fn press(&mut self, xy: Xy) -> u8 {
+    fn steps(&self, qr: Qr<i32>) -> i32 {
+        self.layout.q_steps * qr.x + self.layout.r_steps * qr.y
+    }
+
+    pub fn press(&mut self, xy: Xy) -> i32 {
         let xy = 2.0 * xy - self.size;
         let xy = Vector2::new(xy.x, -xy.y);
 
-        let qr = round_qr(into_qr(xy, self.hex_size + self.hex_gap, self.angle));
+        let qr = round_qr(into_qr(xy, self.hex_size + self.hex_gap, self.layout.angle));
         self.pressed.push(qr);
-        midi_note(qr)
+
+        self.steps(qr)
     }
 
     pub fn release_all(&mut self) {
@@ -143,8 +272,16 @@ impl Hexes {
         let size = self.hex_size / self.size.y;
         let gap = self.hex_gap / self.size.y;
 
-        let c0 = round_qr(into_qr(Vector2::new(-width, -1.0), size, -self.angle));
-        let c1 = round_qr(into_qr(Vector2::new(width, 1.0), size, -self.angle));
+
+        let angle =
+            if self.layout.angle.0 >= 0.0 {
+                -self.layout.angle
+            } else {
+                self.layout.angle
+            };
+        let c0 = round_qr(into_qr(Vector2::new(-width, -1.0), size, angle));
+        let c1 = round_qr(into_qr(Vector2::new(width, 1.0), size, angle));
+
 
         fn rn(a: i32, b: i32) -> ::std::ops::Range<i32> {
             if a < b { a..(b+1) }
@@ -154,10 +291,10 @@ impl Hexes {
         for q in rn(c0.x, c1.x) {
             for r in rn(c0.y, c1.y) {
                 let qr = Vector2::new(q, r);
-                let xy = into_xy(Vector2::new(qr.x as f32, qr.y as f32), size + gap, self.angle);
+                let xy = into_xy(Vector2::new(qr.x as f32, qr.y as f32), size + gap, self.layout.angle);
                 let color = self.hex_color(qr);
                 let v_it = (0..6).map(|i| {
-                    let c = hex_corner(xy, size, self.angle, i);
+                    let c = hex_corner(xy, size, self.layout.angle, i);
                     super::Vertex {
                         pos: [c.x / width, c.y],
                         color: into_lrgb(color),

@@ -6,6 +6,7 @@ extern crate gfx_window_glutin;
 extern crate glutin;
 extern crate cgmath;
 extern crate palette;
+extern crate clap;
 
 extern crate portmidi;
 
@@ -26,32 +27,41 @@ pub type DepthFormat = gfx::format::DepthStencil;
 
 struct MusicBox {
     port: OutputPort,
-    notes: Vec<u8>,
+    key: u8,
+    notes: Vec<i32>,
 }
 
 impl MusicBox {
     fn new(port: OutputPort) -> Self {
         MusicBox {
             port: port,
+            key: 64,
             notes: vec![],
         }
     }
 
-    fn note_on(&mut self, note: u8) -> PmResult<()> {
-        let msg = MidiMessage {
-            status: 0x90,
-            data1: note,
-            data2: 64,
-        };
+    fn note_on(&mut self, note: i32) -> PmResult<()> {
+        let key = self.key as i32 + note;
 
-        self.notes.push(note);
-        self.port.write_message(msg)
+        if key >= 0 && key <= 127 {
+            let msg = MidiMessage {
+                status: 0x90,
+                data1: key as u8,
+                data2: 64,
+            };
+
+            self.notes.push(note);
+            self.port.write_message(msg)?
+        }
+        Ok(())
     }
 
-    fn note_off(&mut self, note: u8) -> PmResult<()> {
+    fn note_off(&mut self, note: i32) -> PmResult<()> {
+        let key = self.key as i32 + note;
+
         let msg = MidiMessage {
             status: 0x80,
-            data1: note,
+            data1: key as u8,
             data2: 64,
         };
 
@@ -204,14 +214,14 @@ impl Intent {
 #[derive(Debug)]
 struct Model {
     hexes: ui::Hexes,
-    notes: Vec<u8>,
+    notes: Vec<i32>,
     sustain: bool,
 }
 
 impl Model {
-    fn new(size: Vector2<f32>) -> Self {
+    fn new(size: Vector2<f32>, layout: ui::Layout) -> Self {
         Model {
-            hexes: ui::Hexes::new(size, vec![]),
+            hexes: ui::Hexes::new(size, layout),
             notes: vec![],
             sustain: false,
         }
@@ -269,6 +279,27 @@ fn update_midi(model: &Model, the_box: &mut MusicBox) {
 const BLACK: [f32; 4] = [0.0, 0.0, 0.0, 1.0];
 
 fn main() {
+    let matches = clap::App::new("31key")
+        .version(env!("CARGO_PKG_VERSION"))
+        .about("A mictotonal keyboard")
+        .arg(
+            clap::Arg::with_name("edo")
+            .long("edo")
+            .default_value("31")
+            .help("Sets the EDO")
+        )
+        .get_matches();
+
+    let layout = match matches.value_of("edo") {
+        Some("31") => ui::edo31_layout(),
+        Some("12") => ui::edo12_layout(),
+        Some("53") => ui::edo53_layout(),
+        _ => {
+            eprintln!("Unsupported EDO");
+            return
+        },
+    };
+
     let events_loop = glutin::EventsLoop::new();
     let builder = glutin::WindowBuilder::new()
         .with_title("Tricesimoprimal Keyboard".to_string())
@@ -287,7 +318,7 @@ fn main() {
 
     let mut mailbox = vec![];
     let mut intent = Intent::new();
-    let mut the_model = Model::new(Vector2::new(960.0, 600.0));
+    let mut the_model = Model::new(Vector2::new(960.0, 600.0), layout);
 
     let mut running = true;
     let mut needs_update = true;

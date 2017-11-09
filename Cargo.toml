@@ -11,6 +11,7 @@ glutin = "0.8"
 cgmath = "0.14"
 palette = "0.2"
 portmidi = "*"
+clap = "2"
 
 [profile.release]
 lto = true
