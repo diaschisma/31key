@@ -17,6 +17,7 @@ use gfx::traits::{Factory, FactoryExt};
 use gfx::{Device, Encoder, PipelineState};
 use gfx_device_gl as gl;
 use gfx_window_glutin as gfx_glutin;
+use glutin::GlContext;
 
 use cgmath::Vector2;
 
@@ -35,7 +36,7 @@ impl MusicBox {
     fn new(port: OutputPort) -> Self {
         MusicBox {
             port: port,
-            key: 64,
+            key: 60,
             notes: vec![],
         }
     }
@@ -136,7 +137,7 @@ impl Renderer {
         }
     }
 
-    pub fn update_views(&mut self, window: &glutin::Window, depth: &mut DepthStencilView<gl::Resources, DepthFormat>) {
+    pub fn update_views(&mut self, window: &glutin::GlWindow, depth: &mut DepthStencilView<gl::Resources, DepthFormat>) {
         gfx_glutin::update_views(&window, &mut self.out_color, depth)
     }
 
@@ -199,13 +200,17 @@ impl Intent {
 
         Some(match ev {
             E::Resized(w, h) => Msg::Resized(Vector2::new(w as f32, h as f32)),
-            E::MouseMoved(w, h) => {
+            E::CursorMoved {position: (w, h), ..} => {
                 self.mouse_pos = Vector2::new(w as f32, h as f32);
                 return None
             },
-            E::MouseInput(Pressed, Left) => Msg::LeftPressed(self.mouse_pos),
-            E::MouseInput(Released, Left) => Msg::LeftReleased,
-            E::KeyboardInput(es, _, Some(vk), _) => Msg::Keyboard(es, vk),
+            E::MouseInput {state: Pressed, button:Left, ..} =>
+                Msg::LeftPressed(self.mouse_pos),
+            E::MouseInput {state: Released, button:Left, ..} => Msg::LeftReleased,
+            E::KeyboardInput {input: glutin::KeyboardInput {
+                state: es, virtual_keycode: Some(vk), ..
+            }, ..} =>
+                Msg::Keyboard(es, vk),
             _ => return None,
         })
     }
@@ -300,14 +305,15 @@ fn main() {
         },
     };
 
-    let events_loop = glutin::EventsLoop::new();
+    let mut events_loop = glutin::EventsLoop::new();
     let builder = glutin::WindowBuilder::new()
         .with_title("Tricesimoprimal Keyboard".to_string())
-        .with_dimensions(960, 600)
+        .with_dimensions(960, 600);
+    let context = glutin::ContextBuilder::new()
         .with_multisampling(8)
-        .with_vsync();
+        .with_vsync(true);
     let (window, mut device, mut factory, main_color, mut main_depth) =
-        gfx_glutin::init::<ColorFormat, DepthFormat>(builder, &events_loop);
+        gfx_glutin::init::<ColorFormat, DepthFormat>(builder, context, &events_loop);
 
     let encoder: gfx::Encoder<_, _> = factory.create_command_buffer().into();
     let mut renderer = Renderer::new(factory, encoder, main_color);
@@ -323,22 +329,24 @@ fn main() {
     let mut running = true;
     let mut needs_update = true;
     while running {
-        events_loop.poll_events(|glutin::Event::WindowEvent{window_id: _, event}| {
+        events_loop.poll_events(|ev| {
             use glutin::WindowEvent::*;
-            match event {
-                Closed => running = false,
-                Resized(w, h) => {
-                    renderer.update_views(&window, &mut main_depth);
-                    if let Some(msg) = intent.intent(Resized(w, h)) {
-                        mailbox.push(msg);
-                    }
-                },
-                ev =>
-                    if let Some(msg) = intent.intent(ev) {
-                        mailbox.push(msg);
+            if let glutin::Event::WindowEvent {event, ..} = ev {
+                match event {
+                    Closed => running = false,
+                    Resized(w, h) => {
+                        renderer.update_views(&window, &mut main_depth);
+                        if let Some(msg) = intent.intent(Resized(w, h)) {
+                            mailbox.push(msg);
+                        }
                     },
+                    ev =>
+                        if let Some(msg) = intent.intent(ev) {
+                            mailbox.push(msg);
+                        },
+                }
+                needs_update = true
             }
-            needs_update = true
         });
 
         if needs_update {
