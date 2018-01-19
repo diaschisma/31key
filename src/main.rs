@@ -1,27 +1,34 @@
 #![allow(dead_code)]
 
 #[macro_use] extern crate gfx;
+#[macro_use] extern crate serde_derive;
+
 extern crate gfx_device_gl;
 extern crate gfx_window_glutin;
 extern crate glutin;
+
+extern crate serde;
+extern crate serde_json;
+extern crate ron;
+
 extern crate cgmath;
 extern crate palette;
 extern crate clap;
-
 extern crate portmidi;
 
 use portmidi::{PortMidi, MidiMessage, OutputPort, Result as PmResult};
 
-use gfx::handle::{RenderTargetView, DepthStencilView};
-use gfx::traits::{Factory, FactoryExt};
-use gfx::{Device, Encoder, PipelineState};
-use gfx_device_gl as gl;
+use gfx::{Device};
 use gfx_window_glutin as gfx_glutin;
 use glutin::GlContext;
 
 use cgmath::Vector2;
 
+use renderer::{Render, Vertex};
+
 mod ui;
+mod layout;
+mod renderer;
 
 pub type ColorFormat = gfx::format::Rgba8;
 pub type DepthFormat = gfx::format::DepthStencil;
@@ -79,100 +86,6 @@ impl MusicBox {
     }
 }
 
-gfx_defines! {
-    vertex Vertex {
-        pos: [f32; 2] = "a_Pos",
-        color: [f32; 4] = "a_Color",
-    }
-
-    pipeline pipe {
-        vbuf: gfx::VertexBuffer<Vertex> = (),
-        out: gfx::RenderTarget<ColorFormat> = "Target0",
-    }
-}
-
-pub trait Render {
-    fn render_fan<V>(&mut self, iter: V)
-    where V: std::iter::IntoIterator<Item=Vertex>;
-}
-
-struct Renderer {
-    factory: gl::Factory,
-    encoder: Encoder<gl::Resources, gl::CommandBuffer>,
-    out_color: RenderTargetView<gl::Resources, ColorFormat>,
-    pso: PipelineState<gl::Resources, pipe::Meta>,
-    vertices: Vec<Vertex>,
-    indices: Vec<u16>,
-}
-
-impl Renderer {
-    pub fn new(
-        mut factory: gl::Factory,
-        encoder: Encoder<gl::Resources, gl::CommandBuffer>,
-        out_color: RenderTargetView<gl::Resources, ColorFormat>
-    ) -> Self {
-        use gfx::state::{Rasterizer, MultiSample};
-
-        let vs = factory.create_shader_vertex(
-            include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/shaders/plain_150.glslv"))
-        ).unwrap();
-        let ps = factory.create_shader_pixel(
-            include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/shaders/plain_150.glslf"))
-        ).unwrap();
-
-        let pso = factory.create_pipeline_state(
-            &gfx::ShaderSet::Simple(vs, ps),
-            gfx::Primitive::TriangleList,
-            Rasterizer {
-                samples: Some(MultiSample),
-                ..Rasterizer::new_fill()
-            },
-            pipe::new(),
-        ).expect("Failed to create a PSO");
-
-        Renderer {
-            factory, encoder, pso, out_color,
-            vertices: vec![],
-            indices: vec![],
-        }
-    }
-
-    pub fn update_views(&mut self, window: &glutin::GlWindow, depth: &mut DepthStencilView<gl::Resources, DepthFormat>) {
-        gfx_glutin::update_views(&window, &mut self.out_color, depth)
-    }
-
-    pub fn draw(&mut self, device: &mut gl::Device) {
-        let (vbuf, sl) =
-            self.factory.create_vertex_buffer_with_slice(&self.vertices, &*self.indices);
-        let data = pipe::Data {
-            vbuf,
-            out: self.out_color.clone(),
-        };
-
-        self.encoder.clear(&data.out, BLACK);
-        self.encoder.draw(&sl, &self.pso, &data);
-        self.encoder.flush(device);
-
-        self.vertices.clear();
-        self.indices.clear();
-    }
-}
-
-impl Render for Renderer {
-    fn render_fan<V>(&mut self, iter: V)
-    where V: std::iter::IntoIterator<Item=Vertex> {
-        let i0 = self.vertices.len() as u16;
-        let mut vs = iter.into_iter();
-        self.vertices.push(vs.next().unwrap());
-        self.vertices.push(vs.next().unwrap());
-        for (i, v) in vs.enumerate() {
-            let i = i as u16 + 1;
-            self.vertices.push(v);
-            self.indices.extend(&[i0, i0+i, i0+i+1]);
-        }
-    }
-}
-
 #[derive(Debug)]
 enum Msg {
     Resized(Vector2<f32>),
@@ -224,7 +137,7 @@ struct Model {
 }
 
 impl Model {
-    fn new(size: Vector2<f32>, layout: ui::Layout) -> Self {
+    fn new(size: Vector2<f32>, layout: layout::Layout) -> Self {
         Model {
             hexes: ui::Hexes::new(size, layout),
             notes: vec![],
@@ -264,7 +177,7 @@ fn model(model: Model, msg: Msg) -> Model {
     Model { hexes, notes, sustain }
 }
 
-fn draw(model: &Model, renderer: &mut Renderer) {
+fn draw(model: &Model, renderer: &mut renderer::Renderer) {
     model.hexes.draw(renderer)
 }
 
@@ -281,8 +194,6 @@ fn update_midi(model: &Model, the_box: &mut MusicBox) {
     }
 }
 
-const BLACK: [f32; 4] = [0.0, 0.0, 0.0, 1.0];
-
 fn main() {
     let matches = clap::App::new("31key")
         .version(env!("CARGO_PKG_VERSION"))
@@ -291,19 +202,40 @@ fn main() {
             clap::Arg::with_name("edo")
             .long("edo")
             .default_value("31")
-            .help("Sets the EDO")
+            .help("Use a predefined layout for a specific EDO")
+        )
+        .arg(
+            clap::Arg::with_name("ron")
+            .long("ron")
+            .takes_value(true)
+            .help("Load the layout from ron")
         )
         .get_matches();
 
-    let layout = match matches.value_of("edo") {
-        Some("31") => ui::edo31_layout(),
-        Some("12") => ui::edo12_layout(),
-        Some("53") => ui::edo53_layout(),
-        _ => {
-            eprintln!("Unsupported EDO");
-            return
-        },
-    };
+    let layout =
+        if let Some(path) = matches.value_of("ron") {
+            use std::io::Read;
+            let mut file = std::fs::File::open(path).expect("file not found");
+
+            let mut ron = String::new();
+            file.read_to_string(&mut ron)
+                .expect("something went wrong reading the file");
+
+            let layout: layout::LayoutConfig =
+                ron::de::from_str(&ron).unwrap();
+
+            layout.into()
+        } else {
+            match matches.value_of("edo") {
+                Some("31") => layout::edo31_layout(),
+                Some("12") => layout::edo12_layout(),
+                Some("53") => layout::edo53_layout(),
+                _ => {
+                    eprintln!("Unsupported EDO");
+                    return
+                },
+            }
+        };
 
     let mut events_loop = glutin::EventsLoop::new();
     let builder = glutin::WindowBuilder::new()
@@ -316,7 +248,7 @@ fn main() {
         gfx_glutin::init::<ColorFormat, DepthFormat>(builder, context, &events_loop);
 
     let encoder: gfx::Encoder<_, _> = factory.create_command_buffer().into();
-    let mut renderer = Renderer::new(factory, encoder, main_color);
+    let mut renderer = renderer::Renderer::new(factory, encoder, main_color);
 
     let midi = PortMidi::new().unwrap();
     let port = midi.default_output_port(1024).unwrap();

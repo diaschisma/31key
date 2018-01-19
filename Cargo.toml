@@ -6,12 +6,18 @@ authors = ["Сухарик <suhr@i2pmail.org>"]
 [dependencies]
 gfx = "0.17"
 gfx_device_gl = "0.15"
-gfx_window_glutin = "*"
-glutin = "*"
-cgmath = "0.16"
+gfx_window_glutin = "0.20"
+glutin = "0.12"
+
+serde = "1.0"
+serde_derive = "1.0"
+ron = "*"
+
+cgmath = { version = "0.16" }
 palette = "0.2"
-portmidi = "*"
+portmidi = "0.2"
 clap = "2"
+
 
 [profile.release]
 lto = true
