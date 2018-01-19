@@ -5,3 +5,10 @@
 31key is a microtonal midi keyboard.
 
 Supported EDOs: 12, 31, 53.
+
+## Installation
+
+1. Install [Rust](https://www.rust-lang.org/)
+2. `cargo install --git https://github.com/suhr/31key.git`
+
+31key will be installed to `$HOME/.cargo/bin`.
