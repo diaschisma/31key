@@ -8,7 +8,6 @@ extern crate gfx_window_glutin;
 extern crate glutin;
 
 extern crate serde;
-extern crate serde_json;
 extern crate ron;
 
 extern crate cgmath;
